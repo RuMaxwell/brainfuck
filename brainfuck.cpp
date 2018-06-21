@@ -284,18 +284,35 @@ public:
 
 	static void debug()
 	{
+		bool ignore_blank = true;
+		bool fast_mode = false;
+		int step_counter = 0;
+
 		int lastlf = 0;
 		string showpiece = take_while_not(program, '\n');
 
 		for (pc = 0; pc < program.length(); pc++)
 		{
 			step();
-			display();
 
 			if (program[pc] == '\n')
 			{
 				lastlf = pc + 1;
 				showpiece = take_while_not(program, '\n', lastlf);
+			}
+			else if (ignore_blank && !ops(program[pc]))
+			{
+				continue;
+			}
+			else if (fast_mode &&
+				((program[pc] == '+' && program[pc + 1] == '+')
+				|| (program[pc] == '-' && program[pc + 1] == '-')))
+			{
+				continue;
+			}
+			else
+			{
+				display();
 			}
 
 			for (int j = 0; j < showpiece.length(); j++)
@@ -310,14 +327,44 @@ public:
 				}
 			}
 
-			char c = getchar();
-			if (c == 'q')
+			if (step_counter > 0)
 			{
-				break;
+				step_counter--;
 			}
-			else if (c == 'p')
+			else
 			{
-				cout << "Current unit: " << ptr << endl;
+				//char cmd[256];
+				string s = "";
+				getline(cin, s);
+				if (s == "q" || s == "quit" || s == "exit")	// quit
+				{
+					break;
+				}
+				else if (s == "p" || s == "ptr")	// ptr
+				{
+					cout << "Current ptr: " << ptr << endl;
+				}
+				else if (s == "eb" || s == "enable blank")	// enable blank
+				{
+					ignore_blank = true;
+				}
+				else if (s == "ib" || s == "ignore blank")	// disable blank
+				{
+					ignore_blank = false;
+				}
+				else if (s[0] == 's' || s.substr(0, 4) == "skip")
+				{
+					string num = s.substr(5);
+					step_counter = atoi(num.c_str());
+				}
+				else if (s == "f" || s == "fast")	// enable fast mode
+				{
+					fast_mode = true;
+				}
+				else if (s == "nf" || s == "nofast")	// disable fast mode
+				{
+					fast_mode = false;
+				}
 			}
 		}
 	}
@@ -396,6 +443,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
+			interpreter::stop_on_print = false;
 			interpreter::readfile(argv[1]);
 			interpreter::execute();
 		}
