@@ -386,6 +386,11 @@ int main(int argc, char* argv[])
 			interpreter::readfile(argv[2]);
 			interpreter::debug();
 		}
+		else
+		{
+			interpreter::readfile(argv[1]);
+			interpreter::execute();
+		}
 	}
 	else
 	{
