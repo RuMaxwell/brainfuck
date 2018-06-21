@@ -270,6 +270,10 @@ public:
 			{
 				stop_on_print = true;
 			}
+			else if (program == "p")
+			{
+				cerr << "Current unit: " <<  ptr << endl;
+			}
 			else
 			{
 				execute();
@@ -310,6 +314,10 @@ public:
 			if (c == 'q')
 			{
 				break;
+			}
+			else if (c == 'p')
+			{
+				cout << "Current unit: " << ptr << endl;
 			}
 		}
 	}
