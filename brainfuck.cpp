@@ -352,7 +352,7 @@ public:
 				{
 					ignore_blank = false;
 				}
-				else if (s[0] == 's' || s.substr(0, 4) == "skip")
+				else if (s.substr(0, 4) == "skip")
 				{
 					string num = s.substr(5);
 					step_counter = atoi(num.c_str());
