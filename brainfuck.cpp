@@ -1,4 +1,4 @@
-#include <cmath>
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -13,10 +13,10 @@
 using namespace std;
 
 
-string take_while_not(const string& s, char c)
+string take_while_not(const string& s, char c, int startpos = 0)
 {
 	string res = "";
-	for (int i = 0; i < s.length(); i++)
+	for (int i = startpos; i < s.length(); i++)
 	{
 		if (s[i] == c)
 		{
@@ -290,8 +290,8 @@ public:
 
 			if (program[pc] == '\n')
 			{
-				showpiece = program.substr(lastlf, pc);
 				lastlf = pc + 1;
+				showpiece = take_while_not(program, '\n', lastlf);
 			}
 
 			for (int j = 0; j < showpiece.length(); j++)

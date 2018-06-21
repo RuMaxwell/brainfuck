@@ -1,1 +1,10 @@
+# The compiled executable
 bf
+# Windows
+bf.exe
+
+# Not tracked bf files
+no-log-bfs
+
+# vscode documentation
+.vscode
