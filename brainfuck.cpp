@@ -143,7 +143,14 @@ public:
 	{
 		if (!ss.empty())
 		{
-			pc = memory[ptr] == 0 ? pc : ss.back();
+			if (memory[ptr] != 0)
+			{
+				pc = ss.back();
+			}
+			else
+			{
+				ss.pop_back();
+			}
 		}
 	}
 
