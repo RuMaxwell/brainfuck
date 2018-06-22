@@ -352,7 +352,11 @@ public:
 				{
 					ignore_blank = false;
 				}
+<<<<<<< HEAD
 				else if (s[0] == 's' || s.substr(0, 4) == "skip")
+=======
+				else if (s.substr(0, 4) == "skip")
+>>>>>>> 5300fa5cf6dac0e65562616e3ac31b23ef1f300c
 				{
 					string num = s.substr(5);
 					step_counter = atoi(num.c_str());
