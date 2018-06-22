@@ -304,9 +304,12 @@ public:
 			{
 				continue;
 			}
-			else if (fast_mode &&
-				((program[pc] == '+' && program[pc + 1] == '+')
-				|| (program[pc] == '-' && program[pc + 1] == '-')))
+			else if (fast_mode
+				&& program[pc] == program[pc + 1]
+				&& (program[pc] == '+'
+				 || program[pc] == '-'
+				 || program[pc] == '<'
+				 || program[pc] == '>'))
 			{
 				continue;
 			}
