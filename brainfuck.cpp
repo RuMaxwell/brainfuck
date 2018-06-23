@@ -13,13 +13,27 @@
 using namespace std;
 
 
-string take_while_not(const string& s, char c, int startpos = 0)
+struct config
+{
+	static char opvec[8];
+	static bool itpt_init_stop_on_print;
+};
+
+char config::opvec[8];
+bool config::itpt_init_stop_on_print;
+
+string take_while_not(const string& s, char c, int startpos = 0, int* resultpos = NULL)
 {
 	string res = "";
-	for (int i = startpos; i < s.length(); i++)
+	int i = startpos;
+	for (; i < s.length(); i++)
 	{
 		if (s[i] == c)
 		{
+			if (resultpos)
+			{
+				*resultpos = i;
+			}
 			break;
 		}
 		else
@@ -30,9 +44,89 @@ string take_while_not(const string& s, char c, int startpos = 0)
 	return res;
 }
 
+string drop_while(const string& s, bool (*f)(char))
+{
+	int i = 0;
+	for (; i < s.length() && f(s[i]); i++) {}
+	return s.substr(i);
+}
+
+bool is_whitespace(char c)
+{
+	return c == ' ' || c == '\t' || c == '\n';
+}
+
+string read_file(const char* file)
+{
+	ifstream f;
+	f.open(file);
+	char buff[65536];
+	string res;
+	while (f.getline(buff, 65536))
+	{
+		res.append(string(buff));
+		res.push_back('\n');
+	}
+	f.close();
+	return res;
+}
+
+void read_config()
+{
+	string contents = read_file("config");
+	string line = "";
+	if (contents.empty())
+	{
+		return;
+	}
+	else
+	{
+		for (int i = 0; i < contents.length();)
+		{
+			line = take_while_not(contents, '\n', i, &i);
+			i++;
+			if (!line.empty())
+			{
+				string property = take_while_not(drop_while(line, is_whitespace), ':');
+				int c = line.find_first_of(':') + 1;
+				string value = drop_while(line.substr(c), is_whitespace);
+				if (property == "operator_vector")
+				{
+					for (int j = 0; j < 8; j++)
+					{
+						config::opvec[j] = value[j];
+					}
+				}
+				else if (property == "interpreter_initializing_stop_on_print")
+				{
+					config::itpt_init_stop_on_print = value == "false" ? false : true;
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+}
+
 void global_init()
 {
 	// setupterm(NULL, fileno(stdout), (int*)0);
+
+	// Default configuration
+	config::itpt_init_stop_on_print = true;
+
+	config::opvec[0] = '+';
+	config::opvec[1] = '-';
+	config::opvec[2] = '<';
+	config::opvec[3] = '>';
+	config::opvec[4] = '[';
+	config::opvec[5] = ']';
+	config::opvec[6] = ',';
+	config::opvec[7] = '.';
+
+	read_config();
 }
 
 int terminal_width()
@@ -46,18 +140,19 @@ class interpreter
 public:
 	typedef map<char, void(*)()> omap;
 
+	static char opvec[8];
 	static omap op;
 
 	static void map_init()
 	{
-		op['+'] = add;
-		op['-'] = sub;
-		op['<'] = movel;
-		op['>'] = mover;
-		op['['] = loops;
-		op[']'] = loope;
-		op[','] = input;
-		op['.'] = output;
+		op[opvec[0]] = add;
+		op[opvec[1]] = sub;
+		op[opvec[2]] = movel;
+		op[opvec[3]] = mover;
+		op[opvec[4]] = loops;
+		op[opvec[5]] = loope;
+		op[opvec[6]] = input;
+		op[opvec[7]] = output;
 	}
 
 	static bool ops(char c)
@@ -101,9 +196,17 @@ public:
 			memory[i] = '\0';
 		}
 
+		// Configures
+		for (int i = 0; i < 8; i++)
+		{
+			opvec[i] = config::opvec[i];
+		}
+
+		stop_on_print = config::itpt_init_stop_on_print;
+
 		map_init();
 
-		cout << "Brainfuck Interpreter, by Ruthenium Maxwell.\nVersion 0.1" << endl;
+		cout << "Brainfuck Interpreter, by Ruthenium Maxwell.\nVersion 0.2" << endl;
 	}
 
 	static void add()
@@ -241,17 +344,9 @@ public:
 		cout << endl;
 	}
 
-	static void readfile(const char* file)
+	static void read_program(const char* file)
 	{
-		ifstream f;
-		f.open(file);
-		char buff[65536];
-		while (f.getline(buff, 65536))
-		{
-			program.append(string(buff));
-			program.push_back('\n');
-		}
-		f.close();
+		program = read_file(file);
 	}
 
 	static void repl()
@@ -266,14 +361,14 @@ public:
 			else if (program == "l")
 			{
 				string file = prompt("Loading file name: ");
-				readfile(file.c_str());
+				read_program(file.c_str());
 				execute();
 			}
-			else if (program == "nc")
+			else if (program == "ns")
 			{
 				stop_on_print = false;
 			}
-			else if (program == "c")
+			else if (program == "s")
 			{
 				stop_on_print = true;
 			}
@@ -313,10 +408,10 @@ public:
 			}
 			else if (fast_mode
 				&& program[pc] == program[pc + 1]
-				&& (program[pc] == '+'
-				 || program[pc] == '-'
-				 || program[pc] == '<'
-				 || program[pc] == '>'))
+				&& (program[pc] == opvec[0]
+				 || program[pc] == opvec[1]
+				 || program[pc] == opvec[2]
+				 || program[pc] == opvec[3]))
 			{
 				continue;
 			}
@@ -404,7 +499,8 @@ public:
 	}
 };
 
-map<char, void(*)()> interpreter::op;
+char interpreter::opvec[8];
+interpreter::omap interpreter::op;
 
 int interpreter::size;
 unsigned char* interpreter::memory;
@@ -438,29 +534,29 @@ int main(int argc, char* argv[])
 		else if (arg == "file")
 		{
 			interpreter::stop_on_print = false;
-			interpreter::readfile(argv[2]);
+			interpreter::read_program(argv[2]);
 			interpreter::execute();
 		}
-		else if (arg == "nc")
+		else if (arg == "ns")
 		{
 			interpreter::stop_on_print = false;
 			interpreter::repl();
 		}
 		else if (arg == "debug")
 		{
-			interpreter::readfile(argv[2]);
+			interpreter::stop_on_print = false;
+			interpreter::read_program(argv[2]);
 			interpreter::debug();
 		}
 		else
 		{
 			interpreter::stop_on_print = false;
-			interpreter::readfile(argv[1]);
+			interpreter::read_program(argv[1]);
 			interpreter::execute();
 		}
 	}
 	else
 	{
-		interpreter::stop_on_print = true;
 		interpreter::repl();
 	}
 
