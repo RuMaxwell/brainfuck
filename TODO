@@ -1,0 +1,2 @@
+RECONSTRUCTION:
+[ ] The code is dirty in the way of too much repeats on configuration property names. Maybe this should be fixed to extend more eazily.
